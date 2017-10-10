@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent (typeof (PlayerController))]
+[RequireComponent(typeof(PlayerController))]
+[RequireComponent(typeof(GunController))]
 public class Player : MonoBehaviour {
     
     public float moveSpeed = 5f;
@@ -10,10 +11,12 @@ public class Player : MonoBehaviour {
     // we need a ref to the camera for the ray cast
     Camera viewCamera;
     PlayerController controller;
-
-	void Start () {
+    GunController gunController;
+    void Start () {
         controller = GetComponent<PlayerController>();
         viewCamera = Camera.main;
+        gunController = GetComponent<GunController>();
+        
 	}
 	
 	void Update () {
@@ -23,6 +26,8 @@ public class Player : MonoBehaviour {
         // we call the Move method of the PlayerController class
         controller.Move(moveVelocity);
 
+
+        // look input
         // fire a ray from the camera on the ground
         Ray ray = viewCamera.ScreenPointToRay(Input.mousePosition);
         // instersect with ground
@@ -39,6 +44,12 @@ public class Player : MonoBehaviour {
 
             // we call the LookAt method of the PlayerController
             controller.LookAt(point);
+        }
+
+        // weapon input
+        if (Input.GetMouseButton(0))
+        {
+            gunController.Shoot();
         }
 	}
 }
