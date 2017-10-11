@@ -6,6 +6,7 @@ public class Projectile : MonoBehaviour {
     // the collision mask is important to not calculate collision with everything
     public LayerMask collisionMask;
     float speed = 10f;
+    float damage = 1f;
 
     // set the speed of the projectile for example if we have different weapons
     public void SetSpeed(float newSpeed)
@@ -37,7 +38,12 @@ public class Projectile : MonoBehaviour {
     void OnHitObject(RaycastHit hit)
     {
         // we print the name of the object hit
-        Debug.Log(hit.collider.gameObject.name);
+        //Debug.Log(hit.collider.gameObject.name);
+        IDamageable damageableObject = hit.collider.GetComponent<IDamageable>();
+        if (damageableObject != null)
+        {
+            damageableObject.TakeHit(damage, hit);
+        }
         // we destroy the projectile
         GameObject.Destroy(gameObject);
     }

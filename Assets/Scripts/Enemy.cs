@@ -5,13 +5,14 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent (typeof (NavMeshAgent))]
-public class Enemy : MonoBehaviour {
+public class Enemy : LivingEntity {
 
     NavMeshAgent pathFinder;
     Transform target;
 
 	
-	void Start () {
+	protected override void Start () {
+        base.Start();
         pathFinder = GetComponent<NavMeshAgent>();
         // the enemy will chase the player
         target = GameObject.FindGameObjectWithTag("Player").transform;
@@ -33,7 +34,10 @@ public class Enemy : MonoBehaviour {
         {
             // go chase the player
             Vector3 targetPosition = new Vector3(target.position.x, 0, target.position.z);
-            pathFinder.SetDestination(targetPosition);
+            if (!dead)
+            {
+                pathFinder.SetDestination(targetPosition);
+            }
             yield return new WaitForSeconds(refreshRate);
         }
     }
