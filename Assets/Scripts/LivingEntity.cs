@@ -10,6 +10,10 @@ public class LivingEntity : MonoBehaviour, IDamageable {
     protected float health;
     protected bool dead;
 
+    // we create an event
+    // other objects can subscribe to it
+    public event System.Action OnDeath;
+
     protected virtual void Start()
     {
         health = startingHealth;
@@ -28,6 +32,12 @@ public class LivingEntity : MonoBehaviour, IDamageable {
     protected void Die()
     {
         dead = true;
+        if (OnDeath != null)
+        {
+            // the object that are subscribed to this event
+            // will call all the methods subscribed the this event
+            OnDeath();
+        }
         GameObject.Destroy(gameObject);
     }
 }
