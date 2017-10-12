@@ -16,6 +16,7 @@ public class Enemy : LivingEntity {
 
     NavMeshAgent pathFinder;
     Transform target;
+    LivingEntity targetEntity;
     // the material of the enemy
     Material skinMaterial;
     // to change the color when he attacks
@@ -24,10 +25,15 @@ public class Enemy : LivingEntity {
     // the distance the enemy stops before attacking
     float attackDistanceThreshold = 0.5f;
     float timeBetweenAttacks = 1f;
+    // the damage that the enemy will inflict
+    float damage = 1f;
 
     float nextAttackTime;
     float myCollisionRadius;
     float targetCollisionRadius;
+
+    // to avoid errors if the player is dead
+    bool hasTarget;
 
 	
 	protected override void Start () {
@@ -35,30 +41,51 @@ public class Enemy : LivingEntity {
         pathFinder = GetComponent<NavMeshAgent>();
         skinMaterial = GetComponent<Renderer>().material;
         originalColor = skinMaterial.color;
-        currentState = State.Chasing;
-        // the enemy will chase the player
-        target = GameObject.FindGameObjectWithTag("Player").transform;
 
-        // we get the radiuses
-        myCollisionRadius = GetComponent<CapsuleCollider>().radius;
-        targetCollisionRadius = GetComponent<CapsuleCollider>().radius;
+        // to avoid errors if the player is dead
+        if (GameObject.FindGameObjectWithTag("Player") != null)
+        {
 
-        StartCoroutine(UpdatePath());
+            currentState = State.Chasing;
+            hasTarget = true;
+            // the enemy will chase the player
+            target = GameObject.FindGameObjectWithTag("Player").transform;
+            targetEntity = target.GetComponent<LivingEntity>();
+            targetEntity.OnDeath += OnTargetDeath;
+            // we get the radiuses
+            myCollisionRadius = GetComponent<CapsuleCollider>().radius;
+            targetCollisionRadius = GetComponent<CapsuleCollider>().radius;
+
+            StartCoroutine(UpdatePath());
+        }
+        
 	}
+
+    void OnTargetDeath()
+    {
+        hasTarget = false;
+        // the enemy now stays idle
+        currentState = State.Idle;
+    }
 	
 	
 	void Update () {
-        // Vector.Distance uses sqrt that is expensive
-        if (Time.time > nextAttackTime)
+        
+        if (hasTarget)
         {
-            float sqrtDistToTarget = (target.position - transform.position).sqrMagnitude;
-
-            if (sqrtDistToTarget < Mathf.Pow(attackDistanceThreshold + myCollisionRadius + targetCollisionRadius, 2))
+            // Vector.Distance uses sqrt that is expensive
+            if (Time.time > nextAttackTime)
             {
-                nextAttackTime = Time.time + timeBetweenAttacks;
-                StartCoroutine(Attack());
+                float sqrtDistToTarget = (target.position - transform.position).sqrMagnitude;
+
+                if (sqrtDistToTarget < Mathf.Pow(attackDistanceThreshold + myCollisionRadius + targetCollisionRadius, 2))
+                {
+                    nextAttackTime = Time.time + timeBetweenAttacks;
+                    StartCoroutine(Attack());
+                }
             }
         }
+        
         
 	}
 
@@ -83,9 +110,17 @@ public class Enemy : LivingEntity {
         // we become red when we attack
         skinMaterial.color = Color.red;
 
+        // to apply damage only when inside the player
+        bool hasAppliedDamage = false;
+
         // while the attack is note done
         while (percent <= 1)
         {
+            if (percent >= 0.5f && !hasAppliedDamage)
+            {
+                hasAppliedDamage = true;
+                targetEntity.TakeDamage(damage);
+            }
             // we augment the percent to arrive at 1
             percent += Time.deltaTime * attackSpeed;
             // we do some math
@@ -106,7 +141,7 @@ public class Enemy : LivingEntity {
     {
         float refreshRate = 0.25f;
         // while there is a target
-        while (target != null)
+        while (hasTarget)
         {
             if (currentState == State.Chasing)
             {

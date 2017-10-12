@@ -5,4 +5,7 @@
 public interface IDamageable
 {
     void TakeHit(float damage, RaycastHit hit);
+
+    // created to remove the RaycastHit
+    void TakeDamage(float damage);
 }
